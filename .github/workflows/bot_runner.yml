@@ -1,0 +1,37 @@
+name: ShopClone47 Bot Long Polling
+
+on:
+  schedule:
+    # Chạy mỗi 3 tiếng theo giờ VN (UTC+7 chuyển sang UTC)
+    - cron: '0 2,5,8,11,14,17,20,23 * * *'
+  workflow_dispatch: # Cho phép bấm chạy bằng tay
+
+concurrency:
+  group: shopclone47-bot
+  cancel-in-progress: true # Tránh đụng độ, tự hủy task cũ nếu bị kẹt
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "python-telegram-bot[job-queue]" curl_cffi
+
+      - name: Run Telegram Bot
+        env:
+          # Bơm các biến bảo mật từ Github Secrets vào môi trường
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SHOP_USER: ${{ secrets.SHOP_USER }}
+          SHOP_PASS: ${{ secrets.SHOP_PASS }}
+        run: python bot_interactive.py
